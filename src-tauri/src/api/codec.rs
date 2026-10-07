@@ -43,7 +43,7 @@ where
     let body = response.text().await.map_err(|error| {
         ApiError::new(ApiErrorKind::Network, format!("{request_name}: {error}"))
     })?;
-    let body = body.trim();
+    let body = trim_response_body(&body);
 
     if body.is_empty() {
         return Err(ApiError::new(
@@ -162,7 +162,7 @@ where
     let body = response.text().await.map_err(|error| {
         ApiError::new(ApiErrorKind::Network, format!("{request_name}: {error}"))
     })?;
-    let body = body.trim();
+    let body = trim_response_body(&body);
 
     if body.is_empty() {
         return Err(ApiError::new(

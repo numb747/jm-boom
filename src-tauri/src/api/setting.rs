@@ -112,7 +112,7 @@ pub(crate) async fn request_remote_setting(
         ApiError::new(ApiErrorKind::Network, format!("{request_name}: {error}"))
     })?;
 
-    decode_setting_payload::<RemoteSettingPayload>(body.trim(), &auth.ts).map_err(|error| {
+    decode_setting_payload::<RemoteSettingPayload>(trim_response_body(&body), &auth.ts).map_err(|error| {
         ApiError::new(
             ApiErrorKind::Payload,
             format!(
