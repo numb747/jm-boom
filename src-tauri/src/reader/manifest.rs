@@ -1,7 +1,7 @@
 use super::types::{ReaderManifest, ReaderPage};
 use crate::api::{
     build_http_client, current_jwt_token, lossy_string_from_scalar, resolve_api_endpoint,
-    resolve_cached_img_host, ApiError, ApiErrorKind, ApiResult,
+    resolve_cached_img_host, trim_response_body, ApiError, ApiErrorKind, ApiResult,
 };
 use crate::storage::runtime_cache;
 use aes::Aes256;
@@ -122,9 +122,11 @@ async fn request_reader_chapter(
         ApiError::new(ApiErrorKind::Network, format!("{request_name}: {error}"))
     })?;
 
-    decode_plugin_payload::<ReaderChapterPayload>(body.trim(), &api_request.ts)
+    let body = trim_response_body(&body);
+
+    decode_plugin_payload::<ReaderChapterPayload>(body, &api_request.ts)
         .or_else(|_| {
-            serde_json::from_str::<ReaderChapterEnvelope>(body.trim()).map(|payload| {
+            serde_json::from_str::<ReaderChapterEnvelope>(body).map(|payload| {
                 ReaderChapterPayload {
                     id: read_id.to_string(),
                     images: payload.images,

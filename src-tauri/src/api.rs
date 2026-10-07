@@ -139,6 +139,12 @@ fn user_avatar_url(img_host: Option<&str>, photo: &str) -> Option<String> {
     }
 }
 
+/// Some API hosts prefix responses with a UTF-8 BOM, which `str::trim` keeps
+/// and serde_json rejects.
+pub(crate) fn trim_response_body(body: &str) -> &str {
+    body.trim().trim_start_matches('\u{feff}').trim_start()
+}
+
 fn response_preview(value: &str) -> String {
     value
         .chars()
