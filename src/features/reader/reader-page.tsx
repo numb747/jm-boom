@@ -180,10 +180,7 @@ export function ReaderPage({ comicId, search }: { comicId: string; search: Reade
     zoom,
     zoomPercent,
     isHintVisible: isZoomHintVisible
-  } = useReaderZoom({
-    readMode: readerReadMode,
-    enabled: !isDoublePageMode
-  })
+  } = useReaderZoom(readerReadMode)
   useNextChapterPrefetch({
     currentIndex,
     pageCount,
@@ -227,7 +224,7 @@ export function ReaderPage({ comicId, search }: { comicId: string; search: Reade
           pageDirection={readerPageDirection}
           onPrevious={goToPreviousPage}
           onNext={goToNextPageOrChapter}
-          scrollTargetRef={isDoublePageMode ? undefined : singleScrollRef}
+          scrollTargetRef={singleScrollRef}
         />
       )}
 
