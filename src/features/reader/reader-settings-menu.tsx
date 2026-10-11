@@ -67,7 +67,7 @@ export function ReaderSettingsMenu() {
       <DropdownMenuContent
         side="top"
         align="start"
-        className="w-56 border border-white/10 bg-neutral-950/95 text-neutral-50 shadow-2xl backdrop-blur-xl"
+        className="w-56 border border-white/10 bg-neutral-950/95 text-neutral-50 shadow-2xl"
       >
         <DropdownMenuLabel className="text-neutral-400">阅读模式</DropdownMenuLabel>
         <DropdownMenuRadioGroup value={readerReadMode} onValueChange={setReaderReadMode}>
