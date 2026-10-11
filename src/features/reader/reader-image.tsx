@@ -1,4 +1,12 @@
-import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type RefObject,
+  type UIEvent
+} from 'react'
 
 import { cn } from '@/lib/utils'
 import type { ReaderPageDirection } from '@/stores/settings-store'
@@ -28,6 +36,8 @@ export function ReaderImageWindow({
         currentIndex={currentIndex}
         pageCount={pageCount}
         pageDirection={pageDirection}
+        zoom={zoom}
+        scrollRef={currentScrollRef}
       />
     )
   }
@@ -73,11 +83,8 @@ function ReaderSinglePage({
   zoom: number
   scrollRef?: RefObject<HTMLDivElement | null>
 }) {
-  const containerRef = useRef<HTMLDivElement | null>(null)
   const [naturalSize, setNaturalSize] = useState<{ width: number; height: number } | null>(null)
   const viewport = useViewportSize()
-  // Viewport center as a fraction of the content; null means "top, centered".
-  const scrollAnchorRef = useRef<{ x: number; y: number } | null>(null)
   const isZoomedIn = zoom > 1
   const fitScale = naturalSize
     ? Math.min(viewport.width / naturalSize.width, viewport.height / naturalSize.height)
@@ -89,35 +96,11 @@ function ReaderSinglePage({
           height: `${naturalSize.height * fitScale * zoom}px`
         }
       : { width: `${100 * zoom}vw`, height: `${100 * zoom}vh` }
-
-  useEffect(() => {
-    if (scrollRef) {
-      scrollRef.current = containerRef.current
-    }
-  }, [scrollRef])
-
-  useEffect(() => {
-    if (isCurrent) {
-      scrollAnchorRef.current = null
-    }
-  }, [isCurrent])
-
-  useLayoutEffect(() => {
-    const container = containerRef.current
-
-    if (!container) {
-      return
-    }
-
-    const anchor = scrollAnchorRef.current
-    container.scrollTo({
-      left: anchor
-        ? anchor.x * container.scrollWidth - container.clientWidth / 2
-        : (container.scrollWidth - container.clientWidth) / 2,
-      top: anchor ? anchor.y * container.scrollHeight - container.clientHeight / 2 : 0,
-      behavior: 'instant'
-    })
-  }, [imageSize.height, imageSize.width, isCurrent])
+  const { containerRef, handleScroll } = useZoomScrollAnchor({
+    contentKey: `${imageSize.width}x${imageSize.height}`,
+    resetKey: isCurrent,
+    scrollRef
+  })
 
   return (
     <div
@@ -126,13 +109,7 @@ function ReaderSinglePage({
         'flex h-screen w-screen scrollbar-none',
         isZoomedIn ? 'pointer-events-auto overflow-auto' : 'overflow-hidden'
       )}
-      onScroll={event => {
-        const container = event.currentTarget
-        scrollAnchorRef.current = {
-          x: (container.scrollLeft + container.clientWidth / 2) / Math.max(container.scrollWidth, 1),
-          y: (container.scrollTop + container.clientHeight / 2) / Math.max(container.scrollHeight, 1)
-        }
-      }}
+      onScroll={handleScroll}
     >
       <img
         src={src}
@@ -154,6 +131,63 @@ function ReaderSinglePage({
       />
     </div>
   )
+}
+
+/**
+ * Keeps the viewport center on the same spot of a zoomable scroll container
+ * while its content resizes, and returns to top-center when resetKey changes.
+ */
+function useZoomScrollAnchor({
+  contentKey,
+  resetKey,
+  scrollRef
+}: {
+  contentKey: string
+  resetKey: unknown
+  scrollRef?: RefObject<HTMLDivElement | null>
+}) {
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  // Viewport center as a fraction of the content; null means "top, centered".
+  const anchorRef = useRef<{ x: number; y: number } | null>(null)
+  const resetKeyRef = useRef(resetKey)
+
+  useEffect(() => {
+    if (scrollRef) {
+      scrollRef.current = containerRef.current
+    }
+  }, [scrollRef])
+
+  useLayoutEffect(() => {
+    const container = containerRef.current
+
+    if (!container) {
+      return
+    }
+
+    if (resetKeyRef.current !== resetKey) {
+      resetKeyRef.current = resetKey
+      anchorRef.current = null
+    }
+
+    const anchor = anchorRef.current
+    container.scrollTo({
+      left: anchor
+        ? anchor.x * container.scrollWidth - container.clientWidth / 2
+        : (container.scrollWidth - container.clientWidth) / 2,
+      top: anchor ? anchor.y * container.scrollHeight - container.clientHeight / 2 : 0,
+      behavior: 'instant'
+    })
+  }, [contentKey, resetKey])
+
+  const handleScroll = useCallback((event: UIEvent<HTMLDivElement>) => {
+    const container = event.currentTarget
+    anchorRef.current = {
+      x: (container.scrollLeft + container.clientWidth / 2) / Math.max(container.scrollWidth, 1),
+      y: (container.scrollTop + container.clientHeight / 2) / Math.max(container.scrollHeight, 1)
+    }
+  }, [])
+
+  return { containerRef, handleScroll }
 }
 
 function useViewportSize() {
@@ -179,12 +213,16 @@ function ReaderDoublePageWindow({
   pages,
   currentIndex,
   pageCount,
-  pageDirection
+  pageDirection,
+  zoom,
+  scrollRef
 }: {
   pages: ReaderWindowPage[]
   currentIndex: number
   pageCount: number
   pageDirection: ReaderPageDirection
+  zoom: number
+  scrollRef?: RefObject<HTMLDivElement | null>
 }) {
   const pageByIndex = new Map(pages.map(page => [page.index, page]))
   const currentPage = pageByIndex.get(currentIndex) ?? null
@@ -196,27 +234,47 @@ function ReaderDoublePageWindow({
   const leftIndex = pageDirection === 'rtl' && showNextSlot ? nextIndex : currentIndex
   const rightIndex = pageDirection === 'rtl' ? currentIndex : nextIndex
   const visibleIndexes = showNextSlot ? [leftIndex, rightIndex] : [currentIndex]
+  const isZoomedIn = zoom > 1
+  const { containerRef, handleScroll } = useZoomScrollAnchor({
+    contentKey: String(zoom),
+    resetKey: currentIndex,
+    scrollRef
+  })
 
   return (
-    <div className="pointer-events-none flex h-screen w-screen items-center justify-center overflow-hidden px-6 py-6">
+    <div className="pointer-events-none relative h-screen w-screen overflow-hidden">
       <div
+        ref={containerRef}
         className={cn(
-          'flex h-full w-full items-center justify-center gap-2',
-          showNextSlot ? 'max-w-[1800px]' : 'max-w-[900px]'
+          'flex h-screen w-screen scrollbar-none p-6',
+          isZoomedIn ? 'pointer-events-auto overflow-auto' : 'overflow-hidden'
         )}
+        onScroll={handleScroll}
       >
-        <ReaderDoublePageSlot
-          page={leftPage}
-          isCurrent={leftIndex === currentIndex}
-          label={`第 ${leftIndex + 1} 张`}
-        />
-        {showNextSlot ? (
+        {/* The spread fits the padded viewport at 100% and scales as one unit; the
+            two pages meet at the spine so zooming in does not center on a gap. */}
+        <div
+          className="m-auto flex shrink-0 items-center justify-center gap-2"
+          style={{
+            width: `calc(min(100vw - 3rem, ${showNextSlot ? 1800 : 900}px) * ${zoom})`,
+            height: `calc((100vh - 3rem) * ${zoom})`
+          }}
+        >
           <ReaderDoublePageSlot
-            page={rightPage}
-            isCurrent={rightIndex === currentIndex}
-            label={`第 ${rightIndex + 1} 张`}
+            page={leftPage}
+            isCurrent={leftIndex === currentIndex}
+            label={`第 ${leftIndex + 1} 张`}
+            align={showNextSlot ? 'end' : 'center'}
           />
-        ) : null}
+          {showNextSlot ? (
+            <ReaderDoublePageSlot
+              page={rightPage}
+              isCurrent={rightIndex === currentIndex}
+              label={`第 ${rightIndex + 1} 张`}
+              align="start"
+            />
+          ) : null}
+        </div>
       </div>
       <ReaderHiddenImagePreloads pages={pages} visibleIndexes={visibleIndexes} />
     </div>
@@ -257,14 +315,23 @@ function ReaderHiddenImagePreloads({
 function ReaderDoublePageSlot({
   page,
   isCurrent,
-  label
+  label,
+  align
 }: {
   page: ReaderWindowPage | null
   isCurrent: boolean
   label: string
+  align: 'start' | 'center' | 'end'
 }) {
   return (
-    <div className="flex h-full min-w-0 flex-1 items-center justify-center bg-neutral-950">
+    <div
+      className={cn(
+        'flex h-full min-w-0 flex-1 items-center bg-neutral-950',
+        align === 'start' && 'justify-start',
+        align === 'center' && 'justify-center',
+        align === 'end' && 'justify-end'
+      )}
+    >
       {page ? (
         <img
           src={page.src}

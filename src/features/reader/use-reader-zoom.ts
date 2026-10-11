@@ -18,7 +18,7 @@ export function clampReaderZoomPercent(percent: number) {
   return Math.min(Math.max(percent, READER_ZOOM_PERCENT_RANGE[0]), READER_ZOOM_PERCENT_RANGE[1])
 }
 
-export function useReaderZoom({ readMode, enabled }: { readMode: ReaderReadMode; enabled: boolean }) {
+export function useReaderZoom(readMode: ReaderReadMode) {
   const isStripMode = readMode === 'strip'
   const zoomPercent = useSettingsStore(state =>
     isStripMode ? state.readerStripZoomPercent : state.readerSingleZoomPercent
@@ -69,10 +69,6 @@ export function useReaderZoom({ readMode, enabled }: { readMode: ReaderReadMode;
   )
 
   useEffect(() => {
-    if (!enabled) {
-      return
-    }
-
     function handleWheel(event: WheelEvent) {
       if (!event.ctrlKey && !event.metaKey) {
         return
@@ -127,7 +123,7 @@ export function useReaderZoom({ readMode, enabled }: { readMode: ReaderReadMode;
       window.removeEventListener('gesturechange', handleGestureChange)
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [applyZoom, enabled])
+  }, [applyZoom])
 
   return {
     zoom: zoomPercent / 100,
