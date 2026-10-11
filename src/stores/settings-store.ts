@@ -10,6 +10,7 @@ export const READER_PAGE_DIRECTIONS = ['ltr', 'rtl'] as const
 export const READER_AUTO_READ_STRIP_DISTANCE_RANGE = [10, 100] as const
 export const READER_AUTO_READ_STRIP_INTERVAL_RANGE = [300, 5000] as const
 export const READER_AUTO_READ_PAGE_INTERVAL_RANGE = [800, 10000] as const
+export const READER_ZOOM_PERCENT_RANGE = [30, 400] as const
 
 export type ApiEndpoint = string
 export type ReaderCacheLimitMb = (typeof READER_CACHE_LIMITS_MB)[number]
@@ -27,6 +28,8 @@ type SettingsState = {
   readerAutoReadStripIntervalMs: number
   readerAutoReadPageIntervalMs: number
   readerAutoReadStripDistancePercent: number
+  readerStripZoomPercent: number
+  readerSingleZoomPercent: number
   proxyMode: ProxyMode
   proxyHost: string
   proxyPort: number
@@ -41,6 +44,8 @@ type SettingsState = {
   setReaderAutoReadStripIntervalMs: (readerAutoReadStripIntervalMs: number) => void
   setReaderAutoReadPageIntervalMs: (readerAutoReadPageIntervalMs: number) => void
   setReaderAutoReadStripDistancePercent: (readerAutoReadStripDistancePercent: number) => void
+  setReaderStripZoomPercent: (readerStripZoomPercent: number) => void
+  setReaderSingleZoomPercent: (readerSingleZoomPercent: number) => void
   setProxyMode: (proxyMode: string) => void
   setProxyHost: (proxyHost: string) => void
   setProxyPort: (proxyPort: number) => void
@@ -59,6 +64,8 @@ const DEFAULT_SETTINGS = {
   readerAutoReadStripIntervalMs: 1600,
   readerAutoReadPageIntervalMs: 3000,
   readerAutoReadStripDistancePercent: 72,
+  readerStripZoomPercent: 100,
+  readerSingleZoomPercent: 100,
   proxyMode: PROXY_MODES[0],
   proxyHost: '127.0.0.1',
   proxyPort: 7890,
@@ -75,6 +82,8 @@ const DEFAULT_SETTINGS = {
   | 'readerAutoReadStripIntervalMs'
   | 'readerAutoReadPageIntervalMs'
   | 'readerAutoReadStripDistancePercent'
+  | 'readerStripZoomPercent'
+  | 'readerSingleZoomPercent'
   | 'proxyMode'
   | 'proxyHost'
   | 'proxyPort'
@@ -148,6 +157,26 @@ export const useSettingsStore = create<SettingsState>()(
           )
         })
       },
+      setReaderStripZoomPercent: readerStripZoomPercent => {
+        set({
+          readerStripZoomPercent: clampNumber(
+            readerStripZoomPercent,
+            READER_ZOOM_PERCENT_RANGE[0],
+            READER_ZOOM_PERCENT_RANGE[1],
+            DEFAULT_SETTINGS.readerStripZoomPercent
+          )
+        })
+      },
+      setReaderSingleZoomPercent: readerSingleZoomPercent => {
+        set({
+          readerSingleZoomPercent: clampNumber(
+            readerSingleZoomPercent,
+            READER_ZOOM_PERCENT_RANGE[0],
+            READER_ZOOM_PERCENT_RANGE[1],
+            DEFAULT_SETTINGS.readerSingleZoomPercent
+          )
+        })
+      },
       setProxyMode: proxyMode => {
         set({
           proxyMode: isProxyMode(proxyMode) ? proxyMode : DEFAULT_SETTINGS.proxyMode
@@ -185,6 +214,8 @@ export const useSettingsStore = create<SettingsState>()(
         readerAutoReadStripIntervalMs: state.readerAutoReadStripIntervalMs,
         readerAutoReadPageIntervalMs: state.readerAutoReadPageIntervalMs,
         readerAutoReadStripDistancePercent: state.readerAutoReadStripDistancePercent,
+        readerStripZoomPercent: state.readerStripZoomPercent,
+        readerSingleZoomPercent: state.readerSingleZoomPercent,
         proxyMode: state.proxyMode,
         proxyHost: state.proxyHost,
         proxyPort: state.proxyPort,

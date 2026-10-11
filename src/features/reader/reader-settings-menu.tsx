@@ -1,4 +1,4 @@
-import { Settings2Icon } from 'lucide-react'
+import { MinusIcon, PlusIcon, Settings2Icon } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -19,6 +19,7 @@ import {
   READER_AUTO_READ_STRIP_INTERVAL_RANGE,
   useSettingsStore
 } from '@/stores/settings-store'
+import { clampReaderZoomPercent, READER_ZOOM_STEP } from './use-reader-zoom'
 
 const READER_SETTING_BUTTON_CLASS =
   'h-7 rounded-md px-2 text-xs text-neutral-200 hover:bg-white/10 hover:text-neutral-50 focus-visible:text-neutral-50'
@@ -54,7 +55,14 @@ export function ReaderSettingsMenu() {
   const setReaderAutoReadStripDistancePercent = useSettingsStore(
     state => state.setReaderAutoReadStripDistancePercent
   )
+  const readerStripZoomPercent = useSettingsStore(state => state.readerStripZoomPercent)
+  const readerSingleZoomPercent = useSettingsStore(state => state.readerSingleZoomPercent)
+  const setReaderStripZoomPercent = useSettingsStore(state => state.setReaderStripZoomPercent)
+  const setReaderSingleZoomPercent = useSettingsStore(state => state.setReaderSingleZoomPercent)
   const isSingleMode = readerReadMode === 'single'
+  const zoomPercent = isSingleMode ? readerSingleZoomPercent : readerStripZoomPercent
+  const setZoomPercent = isSingleMode ? setReaderSingleZoomPercent : setReaderStripZoomPercent
+  const isZoomDisabled = isSingleMode && readerDoublePageMode
 
   return (
     <DropdownMenu>
@@ -78,6 +86,39 @@ export function ReaderSettingsMenu() {
             竖向阅读
           </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator className="bg-white/10" />
+        <div className="flex items-center justify-between gap-3 px-3 py-2">
+          <div className="min-w-0">
+            <div className="text-sm text-neutral-100">缩放</div>
+            <div className="mt-0.5 text-xs whitespace-nowrap text-neutral-500">
+              {isZoomDisabled ? '双页时不可用' : 'Ctrl + 滚轮'}
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            <ReaderZoomButton
+              label="缩小"
+              disabled={isZoomDisabled}
+              onClick={() => setZoomPercent(clampReaderZoomPercent(zoomPercent / READER_ZOOM_STEP))}
+            >
+              <MinusIcon className="size-3.5" />
+            </ReaderZoomButton>
+            <ReaderZoomButton
+              label="重置缩放"
+              disabled={isZoomDisabled}
+              className="w-12 tabular-nums"
+              onClick={() => setZoomPercent(100)}
+            >
+              {zoomPercent}%
+            </ReaderZoomButton>
+            <ReaderZoomButton
+              label="放大"
+              disabled={isZoomDisabled}
+              onClick={() => setZoomPercent(clampReaderZoomPercent(zoomPercent * READER_ZOOM_STEP))}
+            >
+              <PlusIcon className="size-3.5" />
+            </ReaderZoomButton>
+          </div>
+        </div>
         {isSingleMode ? (
           <>
             <DropdownMenuSeparator className="bg-white/10" />
@@ -201,6 +242,36 @@ function ReaderRangeSetting({
         onChange={event => onChange(Number(event.currentTarget.value))}
       />
     </label>
+  )
+}
+
+function ReaderZoomButton({
+  label,
+  disabled,
+  className,
+  onClick,
+  children
+}: {
+  label: string
+  disabled: boolean
+  className?: string
+  onClick: () => void
+  children: ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      disabled={disabled}
+      className={cn(
+        'flex h-7 min-w-7 items-center justify-center rounded-md px-1 text-xs text-neutral-200 transition-colors hover:bg-white/10 hover:text-neutral-50 focus-visible:bg-white/10 focus-visible:text-neutral-50 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-40',
+        className
+      )}
+      onClick={onClick}
+    >
+      {children}
+    </button>
   )
 }
 

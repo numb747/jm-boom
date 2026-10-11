@@ -1,16 +1,27 @@
+import type { RefObject, WheelEvent } from 'react'
+
 import type { ReaderPageDirection } from '@/stores/settings-store'
 
 export function ReaderHotZones({
   pageDirection,
   onPrevious,
-  onNext
+  onNext,
+  scrollTargetRef
 }: {
   pageDirection: ReaderPageDirection
   onPrevious: () => void
   onNext: () => void
+  scrollTargetRef?: RefObject<HTMLElement | null>
 }) {
   const leftAction = pageDirection === 'rtl' ? onNext : onPrevious
   const rightAction = pageDirection === 'rtl' ? onPrevious : onNext
+  // The zones sit above the page, so pass wheel scrolling through to a
+  // zoomed-in page underneath.
+  const forwardWheel = (event: WheelEvent<HTMLButtonElement>) => {
+    if (!event.ctrlKey && !event.metaKey) {
+      scrollTargetRef?.current?.scrollBy({ left: event.deltaX, top: event.deltaY })
+    }
+  }
 
   return (
     <>
@@ -22,6 +33,7 @@ export function ReaderHotZones({
           event.stopPropagation()
           leftAction()
         }}
+        onWheel={forwardWheel}
       />
       <button
         type="button"
@@ -31,6 +43,7 @@ export function ReaderHotZones({
           event.stopPropagation()
           rightAction()
         }}
+        onWheel={forwardWheel}
       />
     </>
   )
