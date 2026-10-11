@@ -1,5 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
-import { useCallback, useEffect, useRef, useState, type RefObject, type WheelEvent } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type RefObject,
+  type WheelEvent
+} from 'react'
 
 import { Button } from '@/components/ui/button'
 import { readerFileSrc } from '@/lib/api/reader'
@@ -9,12 +17,14 @@ import type { ReaderPageQueryKeyFactory, ReaderPageRequester } from './use-reade
 
 const STRIP_PAGE_PRELOAD_DISTANCE = 2
 const STRIP_END_SCROLL_THRESHOLD_PX = 24
+const STRIP_BASE_WIDTH = 'min(64rem, 100vw)'
 
 export function ReaderStripWindow({
   containerRef,
   pageCount,
   currentIndex,
   navigationRequestId,
+  zoom,
   pageQueryKey,
   requestPage,
   onCurrentIndexChange,
@@ -24,6 +34,7 @@ export function ReaderStripWindow({
   pageCount: number
   currentIndex: number
   navigationRequestId: number
+  zoom: number
   pageQueryKey: ReaderPageQueryKeyFactory
   requestPage: ReaderPageRequester
   onCurrentIndexChange: (index: number) => void
@@ -34,6 +45,11 @@ export function ReaderStripWindow({
   const hasInitialScrolledRef = useRef(false)
   const lastNavigationRequestRef = useRef(navigationRequestId)
   const currentIndexRef = useRef(currentIndex)
+  // The page under the viewport center and how far down it the center sits,
+  // so zooming keeps the same spot in view. Unloaded pages keep a fixed
+  // placeholder height, so a fraction of the whole strip would drift.
+  const scrollAnchorRef = useRef<{ x: number; index: number; offset: number } | null>(null)
+  const lastZoomRef = useRef(zoom)
 
   useEffect(() => {
     currentIndexRef.current = currentIndex
@@ -91,9 +107,58 @@ export function ReaderStripWindow({
     })
   }, [resolveCurrentIndex])
 
+  const handleScroll = useCallback(() => {
+    const container = containerRef.current
+
+    if (container) {
+      const viewportCenter = container.scrollTop + container.clientHeight / 2
+      const index = pageRefs.current.findIndex(
+        element =>
+          element !== null &&
+          element.offsetTop <= viewportCenter &&
+          element.offsetTop + element.offsetHeight > viewportCenter
+      )
+      const element = index >= 0 ? pageRefs.current[index] : null
+
+      scrollAnchorRef.current = element
+        ? {
+            x:
+              (container.scrollLeft + container.clientWidth / 2) /
+              Math.max(container.scrollWidth, 1),
+            index,
+            offset: (viewportCenter - element.offsetTop) / Math.max(element.offsetHeight, 1)
+          }
+        : null
+    }
+
+    scheduleResolveCurrentIndex()
+  }, [containerRef, scheduleResolveCurrentIndex])
+
+  useLayoutEffect(() => {
+    const container = containerRef.current
+
+    if (!container || lastZoomRef.current === zoom) {
+      return
+    }
+
+    lastZoomRef.current = zoom
+    const anchor = scrollAnchorRef.current
+    const element = anchor ? pageRefs.current[anchor.index] : null
+
+    if (anchor && element) {
+      container.scrollTo({
+        left: anchor.x * container.scrollWidth - container.clientWidth / 2,
+        top: element.offsetTop + anchor.offset * element.offsetHeight - container.clientHeight / 2,
+        behavior: 'instant'
+      })
+    }
+
+    scheduleResolveCurrentIndex()
+  }, [containerRef, scheduleResolveCurrentIndex, zoom])
+
   const handleWheel = useCallback(
     (event: WheelEvent<HTMLDivElement>) => {
-      if (event.deltaY <= 0) {
+      if (event.deltaY <= 0 || event.ctrlKey || event.metaKey) {
         return
       }
 
@@ -141,11 +206,14 @@ export function ReaderStripWindow({
   return (
     <div
       ref={containerRef}
-      className="h-screen w-screen scrollbar-none overflow-y-auto overscroll-contain scroll-smooth bg-neutral-950"
-      onScroll={scheduleResolveCurrentIndex}
+      className="h-screen w-screen scrollbar-none overflow-auto overscroll-contain scroll-smooth bg-neutral-950"
+      onScroll={handleScroll}
       onWheel={handleWheel}
     >
-      <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col items-center pb-32">
+      <div
+        className="mx-auto flex min-h-screen flex-col items-center pb-32"
+        style={{ width: `calc(${STRIP_BASE_WIDTH} * ${zoom})` }}
+      >
         {Array.from({ length: pageCount }, (_, index) => (
           <ReaderStripImage
             key={index}

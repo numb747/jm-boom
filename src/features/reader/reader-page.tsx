@@ -15,6 +15,7 @@ import { useReaderKeyboardNavigation } from './use-reader-keyboard-navigation'
 import { useNextChapterPrefetch } from './use-next-chapter-prefetch'
 import { useReaderPages } from './use-reader-pages'
 import { useReaderToolbarVisibility } from './use-reader-toolbar-visibility'
+import { useReaderZoom } from './use-reader-zoom'
 import { READER } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { useSettingsStore } from '@/stores/settings-store'
@@ -30,6 +31,7 @@ export function ReaderPage({ comicId, search }: { comicId: string; search: Reade
   const isDoublePageMode = !isStripMode && readerDoublePageMode
   const pageStep = isDoublePageMode ? 2 : 1
   const stripScrollRef = useRef<HTMLDivElement | null>(null)
+  const singleScrollRef = useRef<HTMLDivElement | null>(null)
   const autoReadEntryComicIdRef = useRef<string | null>(null)
   const nextChapterNavigationRef = useRef<string | null>(null)
   const {
@@ -174,6 +176,14 @@ export function ReaderPage({ comicId, search }: { comicId: string; search: Reade
     onBack: goBack,
     onNavigate: hideToolbar
   })
+  const {
+    zoom,
+    zoomPercent,
+    isHintVisible: isZoomHintVisible
+  } = useReaderZoom({
+    readMode: readerReadMode,
+    enabled: !isDoublePageMode
+  })
   useNextChapterPrefetch({
     currentIndex,
     pageCount,
@@ -217,6 +227,7 @@ export function ReaderPage({ comicId, search }: { comicId: string; search: Reade
           pageDirection={readerPageDirection}
           onPrevious={goToPreviousPage}
           onNext={goToNextPageOrChapter}
+          scrollTargetRef={isDoublePageMode ? undefined : singleScrollRef}
         />
       )}
 
@@ -239,6 +250,7 @@ export function ReaderPage({ comicId, search }: { comicId: string; search: Reade
             pageCount={pageCount}
             currentIndex={currentIndex}
             navigationRequestId={navigationRequestId}
+            zoom={zoom}
             pageQueryKey={pageQueryKey}
             requestPage={requestPage}
             onCurrentIndexChange={setObservedPage}
@@ -255,11 +267,23 @@ export function ReaderPage({ comicId, search }: { comicId: string; search: Reade
             pageCount={pageCount}
             doublePageMode={isDoublePageMode}
             pageDirection={readerPageDirection}
+            zoom={zoom}
+            currentScrollRef={singleScrollRef}
           />
         ) : (
           <ReaderError title="暂无图片" description="当前页没有可展示的图片" />
         )}
       </section>
+
+      <div
+        className={cn(
+          'pointer-events-none absolute top-1/2 left-1/2 z-40 -translate-x-1/2 -translate-y-1/2 rounded-lg bg-neutral-950/90 px-4 py-2 text-sm font-medium text-neutral-50 tabular-nums transition-opacity duration-200',
+          isZoomHintVisible ? 'opacity-100' : 'opacity-0'
+        )}
+        aria-hidden="true"
+      >
+        {zoomPercent}%
+      </div>
 
       <ReaderBottomBar
         title={title}
