@@ -1,3 +1,7 @@
+import type { QueryObserverResult } from '@tanstack/react-query'
+
+import type { ComicDetailResult } from '@/lib/api/comic'
+
 export type ReaderSearch = {
   title: string
   chapter: string
@@ -17,3 +21,5 @@ export type ReaderWindowPage = {
   index: number
   src: string
 }
+
+export type ReaderAlbumDetailRefetch = () => Promise<QueryObserverResult<ComicDetailResult>>

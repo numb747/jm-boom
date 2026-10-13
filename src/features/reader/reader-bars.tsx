@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { ReaderChapterControls } from './reader-chapter-controls'
 import { ReaderProgressSlider } from './reader-progress-slider'
-import type { ReaderChapterItem } from './types'
+import type { ReaderAlbumDetailRefetch, ReaderChapterItem } from './types'
 
 export function ReaderTopBar({
   fallbackReadId,
@@ -72,6 +72,8 @@ export function ReaderBottomBar({
   nextChapter,
   chapters,
   albumId,
+  isFavorite,
+  refetchAlbumDetail,
   currentIndex,
   pageCount,
   doublePageMode,
@@ -84,6 +86,8 @@ export function ReaderBottomBar({
   nextChapter: ReaderChapterItem | null
   chapters: ReaderChapterItem[]
   albumId: string
+  isFavorite: boolean | null
+  refetchAlbumDetail: ReaderAlbumDetailRefetch
   currentIndex: number
   pageCount: number
   doublePageMode: boolean
@@ -106,6 +110,8 @@ export function ReaderBottomBar({
       <ReaderChapterControls
         title={title}
         albumId={albumId}
+        isFavorite={isFavorite}
+        refetchAlbumDetail={refetchAlbumDetail}
         currentReadId={currentReadId}
         chapters={chapters}
         previousChapter={previousChapter}

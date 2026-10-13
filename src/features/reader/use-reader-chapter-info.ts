@@ -42,6 +42,7 @@ export function useReaderChapterInfo({
   const title = searchTitle || safeTrim(albumDetail.data?.comic.title)
   const author = albumDetail.data?.comic.author.join(' / ') ?? ''
   const coverUrl = albumDetail.data?.comic.image ?? ''
+  const isFavorite = albumDetail.data?.comic.isFavorite ?? null
 
   return {
     albumId,
@@ -51,7 +52,9 @@ export function useReaderChapterInfo({
     chapter: chapterInfo.chapterTitle,
     chapters: chapterInfo.chapters,
     previousChapter: chapterInfo.previousChapter,
-    nextChapter: chapterInfo.nextChapter
+    nextChapter: chapterInfo.nextChapter,
+    isFavorite,
+    refetchAlbumDetail: albumDetail.refetch
   }
 }
 

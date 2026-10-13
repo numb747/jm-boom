@@ -4,13 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { BackTopButton } from '@/components/back-top-button'
 import { PageBackButton } from '@/components/page-back-button'
-import {
-  getComicComments,
-  getComicDetail,
-  toggleComicFavorite,
-  type ComicDetail,
-  type ComicDetailResult
-} from '@/lib/api/comic'
+import { getComicComments, getComicDetail, type ComicDetail } from '@/lib/api/comic'
 import {
   SINGLE_CHAPTER_TITLE,
   resolveComicAlbumId,
@@ -20,6 +14,7 @@ import {
 import { getComicReadManifest } from '@/lib/api/reader'
 import { CACHE } from '@/lib/constants'
 import { queryKeys } from '@/lib/query-keys'
+import { useComicFavorite } from '@/lib/use-comic-favorite'
 import { ChaptersSection } from './chapters'
 import { CommentsDrawer } from './comments'
 import { ComicHero } from './hero'
@@ -124,36 +119,7 @@ function ComicDetailView({ comic }: { comic: ComicDetail }) {
     }
   }, [endpoint, queryClient, startReadingTarget.readId])
 
-  const favoriteMutation = useMutation({
-    mutationFn: async () =>
-      toggleComicFavorite({
-        comicId: comic.id,
-        currentFavorite: comic.isFavorite,
-        endpoint
-      }),
-    onSuccess: result => {
-      queryClient.setQueryData<ComicDetailResult | undefined>(
-        queryKeys.comicDetail(endpoint, comic.id),
-        current => {
-          if (current == null) {
-            return current
-          }
-
-          return {
-            ...current,
-            comic: {
-              ...current.comic,
-              isFavorite: result.favorited
-            }
-          }
-        }
-      )
-      toast.success(result.favorited ? '已添加收藏' : '已取消收藏')
-    },
-    onError: error => {
-      toast.error(error instanceof Error ? error.message : '收藏操作失败')
-    }
-  })
+  const favorite = useComicFavorite(comic.id)
   const downloadMutation = useMutation({
     mutationFn: (chapters: DownloadChapterOption[]) =>
       enqueueComicDownload({
@@ -211,9 +177,9 @@ function ComicDetailView({ comic }: { comic: ComicDetail }) {
         comic={comic}
         onCommentsClick={() => setIsCommentsOpen(true)}
         onDownloadClick={handleDownloadClick}
-        onFavoriteClick={() => favoriteMutation.mutate()}
+        onFavoriteClick={() => favorite.toggle(comic.isFavorite)}
         downloadBusy={downloadMutation.isPending}
-        favoriteBusy={favoriteMutation.isPending}
+        favoriteBusy={favorite.isPending}
       />
 
       <div className="grid grid-cols-[minmax(0,1fr)_320px] gap-8">

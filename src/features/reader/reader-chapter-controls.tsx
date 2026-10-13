@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { ReaderChapterDrawer } from './reader-chapter-drawer'
 import { toReaderChapterSearch } from './reader-chapter-link'
+import { ReaderFavoriteButton } from './reader-favorite-button'
 import { ReaderSettingsMenu } from './reader-settings-menu'
-import type { ReaderChapterItem } from './types'
+import type { ReaderAlbumDetailRefetch, ReaderChapterItem } from './types'
 
 const CHAPTER_BUTTON_CLASS =
   'h-7 rounded-md px-2 text-xs text-neutral-200 hover:bg-white/10 hover:text-neutral-50 focus-visible:text-neutral-50 disabled:text-neutral-500'
@@ -15,6 +16,8 @@ const CHAPTER_BUTTON_CLASS =
 export function ReaderChapterControls({
   title,
   albumId,
+  isFavorite,
+  refetchAlbumDetail,
   currentReadId,
   chapters,
   previousChapter,
@@ -25,6 +28,8 @@ export function ReaderChapterControls({
 }: {
   title: string
   albumId: string
+  isFavorite: boolean | null
+  refetchAlbumDetail: ReaderAlbumDetailRefetch
   currentReadId: string
   chapters: ReaderChapterItem[]
   previousChapter: ReaderChapterItem | null
@@ -78,6 +83,12 @@ export function ReaderChapterControls({
           </Button>
 
           <ReaderSettingsMenu />
+
+          <ReaderFavoriteButton
+            albumId={albumId}
+            isFavorite={isFavorite}
+            refetchAlbumDetail={refetchAlbumDetail}
+          />
         </div>
 
         <div className="shrink-0 text-xs text-neutral-300 tabular-nums">{pageLabel}</div>
