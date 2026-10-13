@@ -1,0 +1,41 @@
+flowchart TD
+  click[读者点击<br/>收藏 / 已收藏]
+  logged_in{已登录?}
+  open_login[弹出登录框<br/>LoginDialog]
+  kb_guard[键盘翻页守卫<br/>useReaderKeyboardNavigation]
+  refetch[重拉详情<br/>refetchAlbumDetail]
+  already{服务端已收藏?}
+  toast_exist[toast 已在收藏中]
+  toggle["切换收藏<br/>useComicFavorite.toggle(isFavorite)"]
+  rust[收藏命令<br/>toggle_comic_favorite]
+  jm[(JM API<br/>POST /favorite)]
+  write_cache[(写回详情缓存<br/>queryKeys.comicDetail)]
+  synced[底栏与详情页<br/>显示 已收藏 / 收藏]
+  toast_err[toast 收藏操作失败]
+
+  click --> logged_in
+  logged_in -->|否| open_login
+  open_login -.->|输入时不翻页 / Esc 不退出| kb_guard
+  open_login -->|登录成功| refetch
+  refetch --> already
+  already -->|是| toast_exist
+  already -->|否| toggle
+  logged_in -->|是| toggle
+  toggle -->|invoke| rust
+  rust -->|HTTP| jm
+  toggle -->|成功| write_cache
+  write_cache --> synced
+  toggle -->|失败| toast_err
+  refetch -->|失败 经 ReaderFavoriteButton| toast_err
+
+  %% @src logged_in src/features/reader/reader-favorite-button.tsx if (!user) {
+  %% @src open_login src/features/reader/reader-favorite-button.tsx <LoginDialog
+  %% @src refetch src/features/reader/reader-favorite-button.tsx const result = await refetchAlbumDetail()
+  %% @src already src/features/reader/reader-favorite-button.tsx if (result.data.comic.isFavorite) {
+  %% @src toast_exist src/features/reader/reader-favorite-button.tsx toast.success('已在收藏中')
+  %% @src kb_guard src/features/reader/use-reader-keyboard-navigation.ts if (event.defaultPrevented || isEditableTarget(event.target))
+  %% @src toggle src/lib/use-comic-favorite.ts mutationFn: (currentFavorite: boolean)
+  %% @src synced src/features/reader/reader-favorite-button.tsx {isFavorite ? '已收藏' : '收藏'}
+  %% @src toast_err src/lib/use-comic-favorite.ts toast.error(error instanceof Error ? error.message : '收藏操作失败')
+  %% @src rust src-tauri/src/api/comic.rs pub async fn toggle_comic_favorite
+  classDef planned stroke:#bb9af7,stroke-width:2px,stroke-dasharray:3 4

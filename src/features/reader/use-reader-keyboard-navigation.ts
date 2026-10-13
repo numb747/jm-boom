@@ -23,6 +23,11 @@ export function useReaderKeyboardNavigation({
 }) {
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
+      // 弹窗 / 菜单已处理（如 Radix 按 Esc 关闭时会 preventDefault）或正在输入时，不翻页也不退出
+      if (event.defaultPrevented || isEditableTarget(event.target)) {
+        return
+      }
+
       if (readMode === 'strip' && isStripPreviousKey(event)) {
         event.preventDefault()
         onNavigate()
@@ -79,6 +84,13 @@ export function useReaderKeyboardNavigation({
     pageDirection,
     readMode
   ])
+}
+
+function isEditableTarget(target: EventTarget | null) {
+  return (
+    target instanceof HTMLElement &&
+    (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))
+  )
 }
 
 function isStripNextKey(event: KeyboardEvent) {

@@ -1,0 +1,34 @@
+flowchart LR
+  user((读者))
+  bar[阅读器底栏<br/>ReaderChapterControls]
+  fav_btn[收藏按钮<br/>ReaderFavoriteButton]
+  login[登录弹窗<br/>LoginDialog]
+  user_store[(登录状态<br/>useUserStore)]
+  detail[详情页<br/>ComicDetailView]
+  fav_hook[收藏 hook<br/>useComicFavorite]
+  cache[(详情缓存 阅读器与详情页共享<br/>queryKeys.comicDetail)]
+  rust[收藏命令<br/>toggle_comic_favorite]
+  jm[(JM API<br/>POST /favorite)]
+
+  user -->|点击屏幕呼出| bar
+  bar -->|渲染| fav_btn
+  user -->|点击收藏| fav_btn
+  fav_btn -->|读 user| user_store
+  fav_btn -->|未登录时打开| login
+  login -->|登录写入| user_store
+  fav_btn -->|toggle| fav_hook
+  detail -->|toggle| fav_hook
+  fav_hook -->|写回 isFavorite| cache
+  bar -.->|经 useReaderChapterInfo 读 isFavorite| cache
+  fav_hook -->|invoke| rust
+  rust -->|HTTP 切换收藏| jm
+
+  %% @src bar src/features/reader/reader-chapter-controls.tsx export function ReaderChapterControls
+  %% @src login src/features/user/login-dialog.tsx export function LoginDialog
+  %% @src detail src/features/comic-detail/page.tsx function ComicDetailView
+  %% @src fav_btn src/features/reader/reader-favorite-button.tsx export function ReaderFavoriteButton
+  %% @src fav_hook src/lib/use-comic-favorite.ts export function useComicFavorite
+  %% @src rust src-tauri/src/api/comic.rs pub async fn toggle_comic_favorite
+  %% @link fav_btn 20-flow-reader-favorite.mmd
+  %% @commit 62236ba
+  classDef planned stroke:#bb9af7,stroke-width:2px,stroke-dasharray:3 4
