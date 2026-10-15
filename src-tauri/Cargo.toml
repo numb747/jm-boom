@@ -2,7 +2,7 @@
 name = "jm-boom"
 version = "0.4.6"
 description = "Free and open source cross-platform jm manga reader"
-authors = ["ppxb"]
+authors = ["ppxb", "numb747"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

@@ -2,22 +2,37 @@
 
 跨平台禁漫天堂第三方客户端。
 
-## WIP
-
-当前项目处于高速开发中，功能和特性可能会发生巨大变化。
+> \[!NOTE]
+>
+> 本仓库是 [ppxb/jm-boom](https://github.com/ppxb/jm-boom) **Tauri 桌面版**的继续维护版本。
+> 原作者已不再维护桌面版（[说明](https://github.com/ppxb/jm-boom/pull/13#issuecomment-6110381401)），并建议通过 fork 继续维护；
+> 原仓库现在的 jm-boom 是前后端 / Docker 版本，请前往原仓库查看。
+>
+> 相比原版 v0.4.6，本仓库新增了阅读器缩放、阅读器内收藏，并修复了 Linux（WebKitGTK）卡死、部分线路登录失败等问题，详见 [Releases](https://github.com/numb747/jm-boom/releases)。
 
 支持 `Windows`、`Linux`、`MacOS`。
 
 > \[!IMPORTANT]
 >
-> `Linux` 和 `MacOS` 的构建未经过任何测试。
-> 如果你需要前后端构建版本，可以切换到 `feat/docker` 分支查看部署方式。
+> `MacOS` 的构建未经过任何测试。
 
 ### MacOS 安装
 
 出现 `应用已损坏` 或 `无法验证开发者`，请使用 `xattr -cr` 放行。
 
-前往下载 [Release](https://github.com/ppxb/jm-boom/releases)。
+前往下载 [Release](https://github.com/numb747/jm-boom/releases)。
+
+### Arch Linux 安装
+
+已上架 [AUR](https://aur.archlinux.org/packages/jm-boom)（从源码构建），可使用 AUR 助手安装：
+
+```bash
+paru -S jm-boom
+# 或
+yay -S jm-boom
+```
+
+通过 AUR、deb、rpm 安装的版本由系统包管理器负责更新，应用内更新不可用；AppImage 支持应用内更新。
 
 ## Screenshots
 
@@ -85,7 +100,9 @@ bun run tauri dev
 
 ## 致谢
 
-本项目参考了以下项目的部分实现，在此表示衷心的感谢！
+本项目基于 [ppxb/jm-boom](https://github.com/ppxb/jm-boom) 的桌面版继续开发，感谢原作者 ppxb。
+
+原项目参考了以下项目的部分实现，在此表示衷心的感谢！
 
 - [jm-mobile](https://github.com/Dedicatus546/jm-mobile)
 - [Breeze](https://github.com/deretame/Breeze)
