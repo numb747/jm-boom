@@ -48,9 +48,9 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDQyQ0FFRTBBREU1RUJFOTcKUldTWHZsN2VDdTdLUXZ3dnJETXR3L3ZtelhZWFEwL2xkaTlNOEdRc0xmSTFia3IzcnNQdzArc0IK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDU0QzM0Q0ZCMkU2MzM4MzEKUldReE9HTXUrMHpEVkNzcTd0dERxQkwzNDR0TEYrdS9Zd05GemR6UTJjbnlRY3krMjRYYzFISmsK",
       "endpoints": [
-        "https://github.com/ppxb/jm-boom/releases/latest/download/latest.json"
+        "https://github.com/numb747/jm-boom/releases/latest/download/latest.json"
       ]
     }
   }
