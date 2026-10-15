@@ -66,6 +66,15 @@ pub async fn check_app_update(
 
 #[tauri::command]
 pub async fn install_app_update(app: AppHandle) -> UpdateCommandResult<bool> {
+    // Outside an AppImage the binary is owned by the system package manager
+    // (pacman/AUR, deb, rpm), so the in-app updater must not overwrite it.
+    if cfg!(target_os = "linux") && std::env::var_os("APPIMAGE").is_none() {
+        return Err(ApiErrorDto::new(
+            ApiErrorKind::Client,
+            "当前版本由系统包管理器安装，请通过包管理器（如 pacman / AUR 助手、apt、dnf）更新",
+        ));
+    }
+
     let updater = build_updater(&app).map_err(ApiErrorDto::from)?;
 
     let Some(update) = updater.check().await.map_err(|error| {
